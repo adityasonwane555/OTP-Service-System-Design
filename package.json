@@ -1,0 +1,31 @@
+{
+  "name": "otp-service-system-design",
+  "version": "1.0.0",
+  "description": "This repository documents the process of designing and building a production-grade OTP (One-Time Password) Service from scratch.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adityasonwane555/OTP-Service-System-Design.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/adityasonwane555/OTP-Service-System-Design/issues"
+  },
+  "homepage": "https://github.com/adityasonwane555/OTP-Service-System-Design#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "redis": "^6.0.0",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
