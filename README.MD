@@ -4,23 +4,36 @@
 
 This repository documents the process of designing and building a production-grade OTP (One-Time Password) Service from scratch.
 
-The goal is not only to build a working application but also to understand the engineering decisions behind real-world authentication systems used by companies at scale.
+The objective is not only to build a working OTP Service but also to understand the system design, backend engineering, scalability, reliability, and security principles behind authentication systems used by real-world companies.
 
-This project follows a structured System Design approach, progressing from problem understanding to production-ready architecture.
+This project is being developed incrementally, following a structured engineering approach from problem understanding to production readiness.
 
 ---
 
-## What Is an OTP Service?
+## Project Goals
 
-An OTP (One-Time Password) Service generates, delivers, verifies, and expires temporary authentication codes used for:
+Build a production-grade OTP Service capable of:
+
+* Generating OTPs
+* Verifying OTPs
+* Managing OTP expiration
+* Preventing OTP reuse
+* Limiting verification attempts
+* Supporting future SMS and Email delivery
+* Scaling horizontally
+* Following security best practices
+
+---
+
+## Real-World Use Cases
 
 * Phone Number Authentication
 * Email Verification
-* Password Reset Flows
+* Password Reset
 * Two-Factor Authentication (2FA)
-* Banking and Transaction Verification
+* Banking Transaction Verification
 
-Examples include:
+Examples:
 
 * WhatsApp
 * Uber
@@ -30,49 +43,18 @@ Examples include:
 
 ---
 
-## Project Goals
-
-Build an OTP Service capable of:
-
-* Generating OTPs
-* Verifying OTPs
-* OTP expiration handling
-* Single-use OTP enforcement
-* Brute-force protection
-* Request tracking
-* Production-grade scalability
-* Security best practices
-
----
-
-## Learning Objectives
-
-This project is focused on learning:
-
-* System Design
-* Backend Engineering
-* Authentication Systems
-* Security Fundamentals
-* Redis
-* Distributed Systems
-* Scalability
-* Reliability
-* Production Architecture
-
----
-
 ## System Design Journey
 
 ### Phase 1 — Problem Understanding
 
 Completed:
 
-* OTP fundamentals
-* Real-world use cases
-* Business requirements
-* Functional requirements
-* Non-functional requirements
-* Security considerations
+* OTP Fundamentals
+* Business Requirements
+* Functional Requirements
+* Non-Functional Requirements
+* Security Requirements
+* Core Entity Identification
 
 ---
 
@@ -80,15 +62,14 @@ Completed:
 
 Completed:
 
-* High-level architecture
-* Request lifecycle
-* Core components
-* Data flow
-* Redis storage design
-* Scalability considerations
-* Security architecture
+* High-Level Architecture
+* Request Lifecycle
+* Data Flow
+* Redis Storage Strategy
+* Scalability Considerations
+* Security Considerations
 
-Architecture:
+High-Level Architecture:
 
 Client
 |
@@ -113,14 +94,14 @@ SMS / Email Provider
 
 Completed:
 
-* API contract design
-* OTP Request entity modeling
-* Redis key structure
-* OTP lifecycle design
-* Verification algorithm
-* Edge case analysis
+* OTP Request Model
+* API Design
+* Redis Key Design
+* OTP Lifecycle Design
+* Verification Algorithm
+* Edge Case Analysis
 
-Core APIs:
+Planned APIs:
 
 POST /api/v1/otp/send
 
@@ -134,27 +115,30 @@ Current Progress:
 
 Completed:
 
-* Project initialization
-* Express setup
-* Environment configuration
-* Layered architecture setup
-* Health check endpoint
+* Node.js Project Initialization
+* Express Setup
+* Environment Configuration
+* Layered Folder Structure
+* Health Check Endpoint
+* Redis Integration
+* Redis Connectivity Testing
+* Redis TTL Validation
+* Dockerized Redis Environment
 
-In Progress:
+Currently Building:
 
-* Redis integration
+* OTP Generation Service
 
 Upcoming:
 
-* OTP generation
-* OTP hashing
-* OTP storage
-* OTP verification
-* Request validation
+* OTP Hashing
+* OTP Storage
+* OTP Verification
+* Request Validation
 
 ---
 
-## MVP Architecture
+## Current Architecture
 
 Client
 |
@@ -166,7 +150,7 @@ Redis
 
 ---
 
-## Current Project Structure
+## Project Structure
 
 ```text
 otp-service/
@@ -176,17 +160,12 @@ otp-service/
 │   │   └── redis.js
 │   │
 │   ├── controllers/
-│   │   └── otp.controller.js
-│   │
-│   ├── services/
-│   │   └── otp.service.js
 │   │
 │   ├── routes/
-│   │   └── otp.routes.js
+│   │
+│   ├── services/
 │   │
 │   ├── utils/
-│   │   ├── otp.js
-│   │   └── hash.js
 │   │
 │   └── server.js
 │
@@ -198,7 +177,7 @@ otp-service/
 
 ---
 
-## Planned Tech Stack
+## Technology Stack
 
 ### Backend
 
@@ -209,39 +188,24 @@ otp-service/
 
 * Redis
 
+### Infrastructure
+
+* Docker
+
 ### Utilities
 
 * UUID
 * Dotenv
 
-### Future Additions
+### Planned Additions
 
 * BullMQ
-* Docker
 * Jest
 * Winston
-* Rate Limiting
+* Docker Compose
 * Monitoring
-* Metrics Collection
-
----
-
-## Security Decisions
-
-Current Security Design:
-
-* OTPs are hashed before storage
-* OTPs expire automatically using Redis TTL
-* OTPs are single-use
-* Verification attempts are limited
-* Request IDs are used instead of exposing user identifiers
-
-Future Security Enhancements:
-
+* Metrics
 * Rate Limiting
-* Abuse Detection
-* IP-based Controls
-* Audit Logging
 
 ---
 
@@ -249,21 +213,98 @@ Future Security Enhancements:
 
 ### Why Redis?
 
-* Extremely fast
-* Native expiration support
-* Ideal for temporary authentication data
+OTPs are:
+
+* Temporary
+* Short-Lived
+* Frequently Accessed
+* Frequently Deleted
+
+Redis provides:
+
+* Extremely Low Latency
+* Native TTL Support
+* Automatic Expiration
+* Simple Data Model
+
+---
+
+### Why Use TTL?
+
+Redis automatically removes expired OTPs.
+
+Example:
+
+```text
+OTP Created
+      ↓
+TTL = 300 seconds
+      ↓
+Automatic Deletion
+```
+
+No cleanup jobs required.
+
+---
 
 ### Why Hash OTPs?
 
-If storage is compromised, attackers should not be able to read OTP values.
+OTP values should never be stored in plaintext.
+
+Future implementation:
+
+```text
+Generate OTP
+      ↓
+Hash OTP
+      ↓
+Store Hash
+```
+
+This prevents OTP disclosure if storage is compromised.
+
+---
 
 ### Why Request IDs?
 
 Request IDs provide:
 
-* Better traceability
+* Better Traceability
 * Cleaner APIs
-* Improved security boundaries
+* Security Isolation
+* Easier Auditing
+
+---
+
+## Redis Learning
+
+Implemented:
+
+### Connectivity Test
+
+Endpoint:
+
+GET /redis-test
+
+Purpose:
+
+* Verify Redis Connection
+* Verify Read Operations
+* Verify Write Operations
+
+---
+
+### TTL Test
+
+Endpoint:
+
+GET /ttl-test
+
+Purpose:
+
+* Verify Expiration Mechanism
+* Understand Redis TTL Behavior
+* Validate OTP Storage Strategy
 
 ---
 
@@ -283,8 +324,11 @@ Request IDs provide:
 * [x] Express Server
 * [x] Environment Configuration
 * [x] Health Check Endpoint
-* [ ] Redis Integration
+* [x] Redis Integration
+* [x] Redis Connectivity Testing
+* [x] Redis TTL Testing
 * [ ] OTP Generation
+* [ ] OTP Hashing
 * [ ] OTP Storage
 * [ ] OTP Verification
 * [ ] Request Validation
@@ -294,17 +338,17 @@ Request IDs provide:
 
 * [ ] Queue System
 * [ ] Worker Service
-* [ ] SMS Provider Integration
-* [ ] Email Provider Integration
+* [ ] SMS Integration
+* [ ] Email Integration
 * [ ] Rate Limiting
 * [ ] Logging
 * [ ] Monitoring
-* [ ] Docker
+* [ ] Docker Compose
 * [ ] CI/CD
 
 ---
 
-## Running The Project
+## Running the Project
 
 Install dependencies:
 
@@ -318,13 +362,15 @@ Start development server:
 npm run dev
 ```
 
-Health check:
+---
 
-```http
+## Available Endpoints
+
+### Health Check
+
 GET /health
-```
 
-Expected response:
+Response:
 
 ```json
 {
@@ -335,8 +381,63 @@ Expected response:
 
 ---
 
+### Redis Connectivity Test
+
+GET /redis-test
+
+Response:
+
+```json
+{
+  "success": true,
+  "value": "hello-redis"
+}
+```
+
+---
+
+### Redis TTL Test
+
+GET /ttl-test
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "OTP stored for 30 seconds"
+}
+```
+
+---
+
+## Current Milestone
+
+Completed:
+
+* Express Application Setup
+* Redis Integration
+* Dockerized Development Environment
+* Redis TTL Verification
+
+Next Milestone:
+
+Build the first real OTP API:
+
+POST /api/v1/otp/send
+
+This endpoint will:
+
+* Generate Secure OTPs
+* Generate Request IDs
+* Hash OTPs
+* Store OTPs in Redis
+* Apply TTL Expiration
+
+---
+
 ## Purpose
 
-This repository serves as a public engineering journal documenting the complete journey of designing and building a production-grade OTP Service.
+This repository serves as a public engineering journal documenting the complete journey of designing and building a production-grade OTP Service from scratch.
 
-The emphasis is on understanding the reasoning behind every engineering and system design decision rather than simply implementing features.
+The focus is on understanding engineering decisions and system design trade-offs rather than simply implementing features.
