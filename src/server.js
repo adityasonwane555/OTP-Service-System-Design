@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 
 import redisClient from "./config/redis.js";
+import otpRoutes from "./routes/otp.routes.js";
 
 dotenv.config();
 
@@ -9,16 +10,14 @@ const app = express();
 
 app.use(express.json());
 
+app.use("/api/v1/otp", otpRoutes);
+
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
   try {
-    // Connect to Redis before starting the server
     await redisClient.connect();
 
-    /*
-     * Health Check Endpoint
-     */
     app.get("/health", (req, res) => {
       return res.status(200).json({
         success: true,
@@ -26,9 +25,6 @@ async function startServer() {
       });
     });
 
-    /*
-     * Redis Connectivity Test
-     */
     app.get("/redis-test", async (req, res) => {
       try {
         await redisClient.set("test-key", "hello-redis");
@@ -47,13 +43,10 @@ async function startServer() {
       }
     });
 
-    /*
-     * Redis TTL Test
-     */
     app.get("/ttl-test", async (req, res) => {
       try {
         await redisClient.set("otp:test", "123456", {
-          EX: 30, // expires in 30 seconds
+          EX: 30,
         });
 
         return res.status(200).json({
