@@ -2,7 +2,7 @@ import { createOTP } from "../services/otp.service.js";
 
 export async function sendOTP(req, res) {
   try {
-    const { target } = req.body;
+    const target = req.body?.target;
 
     if (!target) {
       return res.status(400).json({
@@ -23,7 +23,7 @@ export async function sendOTP(req, res) {
 
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
+      message: error.message,
     });
   }
 }
