@@ -4,9 +4,9 @@
 
 This repository documents the process of designing and building a production-grade OTP (One-Time Password) Service from scratch.
 
-The goal is not only to build a working OTP Service but also to understand the engineering decisions, system design principles, scalability challenges, security considerations, and production-readiness requirements behind real-world authentication systems.
+The goal is to learn System Design, Backend Engineering, Authentication Systems, Security, Scalability, and Production Readiness by building a real-world OTP service step by step.
 
-This project is being built incrementally while documenting every architectural and implementation decision.
+This project focuses on understanding not only how to build a system, but why engineering decisions are made.
 
 ---
 
@@ -18,8 +18,8 @@ An OTP (One-Time Password) Service is responsible for:
 * Delivering OTPs
 * Verifying OTPs
 * Expiring OTPs
-* Preventing OTP reuse
-* Protecting against brute-force attacks
+* Preventing OTP Reuse
+* Limiting Verification Attempts
 
 Common use cases:
 
@@ -28,14 +28,6 @@ Common use cases:
 * Password Reset
 * Two-Factor Authentication (2FA)
 * Banking Transaction Verification
-
-Examples:
-
-* WhatsApp
-* Uber
-* Google
-* Amazon
-* Banking Applications
 
 ---
 
@@ -48,27 +40,11 @@ Build a production-grade OTP Service capable of:
 * Automatic OTP Expiration
 * One-Time OTP Consumption
 * Verification Attempt Limiting
-* Rate Limiting
 * SMS Delivery
 * Email Delivery
-* Horizontal Scalability
-* Production-Ready Monitoring
-
----
-
-## Learning Objectives
-
-This project focuses on learning:
-
-* System Design
-* Backend Engineering
-* Authentication Systems
-* Security Fundamentals
-* Redis
-* Distributed Systems
-* Scalability
-* Reliability
-* Production Architecture
+* Rate Limiting
+* Horizontal Scaling
+* Production Monitoring
 
 ---
 
@@ -94,11 +70,11 @@ Completed:
 * High-Level Architecture
 * Request Lifecycle
 * Data Flow
-* Redis Storage Strategy
+* Storage Design
+* Security Design
 * Scalability Considerations
-* Security Considerations
 
-High-Level Architecture:
+Architecture:
 
 Client
 |
@@ -126,15 +102,9 @@ Completed:
 * OTP Request Model
 * API Contract Design
 * Redis Key Structure
-* Verification Flow Design
 * OTP Lifecycle Design
+* Verification Flow Design
 * Edge Case Analysis
-
-Planned APIs:
-
-POST /api/v1/otp/send
-
-POST /api/v1/otp/verify
 
 ---
 
@@ -142,30 +112,34 @@ POST /api/v1/otp/verify
 
 ### Completed
 
-* Node.js Project Initialization
-* Express Server Setup
+* Node.js Project Setup
+* Express Setup
 * Environment Configuration
-* Layered Folder Structure
 * Health Check Endpoint
 * Redis Integration
 * Redis Connectivity Testing
 * Redis TTL Validation
 * Dockerized Redis Environment
-* OTP Generation Service
+* OTP Generation
 * UUID Request ID Generation
 * SHA-256 OTP Hashing
 * OTP Storage in Redis
+* OTP Verification
+* Attempt Tracking
+* OTP Consumption
+* Automatic OTP Expiration
 
 ### Currently Building
 
-* OTP Verification Service
+* Production Hardening
 
 ### Upcoming
 
-* Attempt Tracking
-* OTP Consumption
-* Request Validation
+* Validation Middleware
+* Secure OTP Generation
 * Rate Limiting
+* Logging
+* Monitoring
 * SMS Delivery
 * Email Delivery
 
@@ -178,10 +152,10 @@ Client
 v
 Express API
 |
-+-------------------+
-|                   |
-v                   v
-OTP Generation   OTP Verification
++-----------------------+
+|                       |
+v                       v
+OTP Generation      OTP Verification
 |
 v
 Redis
@@ -239,138 +213,11 @@ otp-service/
 
 * UUID
 * Dotenv
-* Crypto (SHA-256)
-
-## Planned Additions
-
-* BullMQ
-* Docker Compose
-* Jest
-* Winston
-* Monitoring
-* Metrics Collection
-* Rate Limiting
+* Node.js Crypto
 
 ---
 
-# Engineering Decisions
-
-## Why Redis?
-
-OTPs are:
-
-* Temporary
-* Short-Lived
-* Frequently Read
-* Frequently Deleted
-
-Redis provides:
-
-* Extremely Low Latency
-* Native TTL Support
-* Automatic Expiration
-* Simple Key-Value Storage
-
----
-
-## Why TTL?
-
-Redis automatically removes expired OTPs.
-
-Example:
-
-OTP Created
-↓
-TTL = 300 Seconds
-↓
-Automatic Deletion
-
-Benefits:
-
-* No Cleanup Jobs
-* Simpler Architecture
-* Better Performance
-
----
-
-## Why Store OTP Hashes?
-
-OTP values are never stored directly.
-
-Flow:
-
-Generate OTP
-↓
-Hash OTP
-↓
-Store Hash
-
-Verification:
-
-User OTP
-↓
-Hash OTP
-↓
-Compare Hashes
-
-Benefits:
-
-* Prevents Plaintext Storage
-* Reduces Risk During Data Leaks
-* Follows Password Storage Principles
-
----
-
-## Why Use Request IDs?
-
-Instead of verifying:
-
-Email + OTP
-
-we verify:
-
-Request ID + OTP
-
-Benefits:
-
-* Better Traceability
-* Cleaner APIs
-* Easier Auditing
-* Security Isolation
-
----
-
-# Redis Learning
-
-## Connectivity Testing
-
-Endpoint:
-
-GET /redis-test
-
-Purpose:
-
-* Verify Redis Connection
-* Verify Read Operations
-* Verify Write Operations
-
----
-
-## TTL Testing
-
-Endpoint:
-
-GET /ttl-test
-
-Purpose:
-
-* Understand Redis Expiration
-* Validate OTP Storage Strategy
-* Verify Automatic Cleanup
-
----
-
-# Available Endpoints
+# Implemented APIs
 
 ## Health Check
 
@@ -382,36 +229,6 @@ Response:
 {
   "success": true,
   "message": "OTP Service Healthy"
-}
-```
-
----
-
-## Redis Connectivity Test
-
-GET /redis-test
-
-Response:
-
-```json
-{
-  "success": true,
-  "value": "hello-redis"
-}
-```
-
----
-
-## Redis TTL Test
-
-GET /ttl-test
-
-Response:
-
-```json
-{
-  "success": true,
-  "message": "OTP stored for 30 seconds"
 }
 ```
 
@@ -434,16 +251,134 @@ Response:
 ```json
 {
   "success": true,
-  "requestId": "9fd9d3d3-62b1-4f35-8c1b-1f0d2e1f6b11",
+  "requestId": "uuid",
   "otp": "834291"
 }
 ```
 
 Note:
 
-The OTP is currently returned in the response for development purposes only.
+The OTP is currently returned for development and testing purposes only.
 
-In production it will be delivered through SMS or Email and never returned to the client.
+In production it will be sent via SMS or Email.
+
+---
+
+## Verify OTP
+
+POST /api/v1/otp/verify
+
+Request:
+
+```json
+{
+  "requestId": "uuid",
+  "otp": "834291"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "verified": true
+}
+```
+
+---
+
+# Current OTP Lifecycle
+
+OTP Creation:
+
+Generate OTP
+↓
+Hash OTP
+↓
+Store Hash
+↓
+Redis TTL (300 sec)
+
+Verification:
+
+User OTP
+↓
+Hash OTP
+↓
+Compare Hashes
+↓
+Success
+↓
+Delete OTP
+
+Expiration:
+
+OTP Created
+↓
+TTL Reaches Zero
+↓
+Redis Deletes Key
+
+---
+
+# Security Features Implemented
+
+## OTP Hashing
+
+OTP values are never stored directly.
+
+Stored:
+
+```text
+SHA256(OTP)
+```
+
+instead of:
+
+```text
+123456
+```
+
+---
+
+## One-Time Usage
+
+Successful verification:
+
+```text
+Verify OTP
+↓
+Delete Redis Key
+```
+
+Prevents OTP reuse.
+
+---
+
+## Attempt Tracking
+
+Failed verifications increment:
+
+```text
+attempts
+```
+
+After:
+
+```text
+attempts >= 5
+```
+
+Verification is blocked.
+
+---
+
+## Automatic Expiration
+
+Redis TTL automatically removes expired OTPs.
+
+No cleanup jobs required.
 
 ---
 
@@ -459,22 +394,20 @@ In production it will be delivered through SMS or Email and never returned to th
 
 ## Implementation
 
-* [x] Project Setup
-* [x] Express Server
-* [x] Environment Configuration
-* [x] Health Check Endpoint
+* [x] Express Setup
 * [x] Redis Integration
-* [x] Redis Connectivity Testing
-* [x] Redis TTL Testing
 * [x] OTP Generation
-* [x] UUID Request ID Generation
-* [x] SHA-256 OTP Hashing
-* [x] OTP Storage in Redis
-* [ ] OTP Verification
-* [ ] Attempt Limiting
-* [ ] OTP Consumption
-* [ ] Request Validation
-* [ ] Error Handling
+* [x] UUID Request IDs
+* [x] SHA-256 Hashing
+* [x] OTP Storage
+* [x] OTP Verification
+* [x] Attempt Tracking
+* [x] OTP Consumption
+* [x] Automatic Expiration
+* [ ] Validation Middleware
+* [ ] Structured Logging
+* [ ] Rate Limiting
+* [ ] Custom Error Handling
 
 ## Production Readiness
 
@@ -482,9 +415,8 @@ In production it will be delivered through SMS or Email and never returned to th
 * [ ] Worker Service
 * [ ] SMS Integration
 * [ ] Email Integration
-* [ ] Rate Limiting
-* [ ] Logging
 * [ ] Monitoring
+* [ ] Metrics
 * [ ] Docker Compose
 * [ ] CI/CD
 
@@ -494,31 +426,37 @@ In production it will be delivered through SMS or Email and never returned to th
 
 ## Redis TTL
 
-Redis can automatically delete keys after a specified duration.
+Redis automatically expires OTPs after a configured duration.
 
 Example:
 
 SET otp:key value EX 300
 
-This removes the need for cleanup jobs.
+Benefits:
+
+* No cleanup jobs
+* Simpler architecture
+* Better performance
 
 ---
 
-## Hashing
+## Hash-Based Verification
 
-OTPs are hashed using SHA-256 before storage.
+Stored:
 
-Benefits:
+SHA256(OTP)
 
-* No Plaintext Storage
-* Better Security
-* Industry Standard Practice
+Verification:
+
+SHA256(User OTP)
+↓
+Compare Hashes
+
+Same principle used in password authentication systems.
 
 ---
 
 ## Layered Architecture
-
-Request Flow:
 
 Route
 ↓
@@ -533,38 +471,36 @@ Benefits:
 * Separation of Concerns
 * Easier Testing
 * Better Maintainability
-* Scalable Codebase
+* Easier Scaling
 
 ---
 
 # Current Milestone
 
-Completed:
+Core OTP Workflow Complete
+
+Implemented:
 
 * OTP Generation
-* Request ID Creation
 * OTP Hashing
-* Redis Storage
-* Automatic Expiration via TTL
-
-Verified:
-
-* Redis Connectivity
-* Redis Persistence
-* TTL Behavior
-* End-to-End OTP Creation Flow
+* OTP Storage
+* OTP Verification
+* Attempt Tracking
+* OTP Consumption
+* Automatic Expiration
 
 Next Milestone:
 
-POST /api/v1/otp/verify
+Production Hardening
 
-This endpoint will introduce:
+Planned Improvements:
 
-* Hash Comparison
-* OTP Verification
-* Attempt Tracking
-* One-Time OTP Consumption
-* Verification Error Handling
+* crypto.randomInt()
+* Validation Middleware
+* Custom Error Classes
+* Structured Logging
+* Rate Limiting
+* Better Error Responses
 
 ---
 
@@ -594,4 +530,4 @@ npm run dev
 
 This repository serves as a public engineering journal documenting the complete journey of designing and building a production-grade OTP Service from scratch.
 
-The focus is on understanding engineering decisions, architecture trade-offs, scalability concerns, and production-grade backend development rather than simply implementing features.
+The focus is on understanding architecture, engineering trade-offs, scalability, security, and production-grade backend development rather than simply implementing features.
