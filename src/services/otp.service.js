@@ -36,3 +36,41 @@ export async function createOTP(target) {
     otp, // temporary for testing
   };
 }
+
+export async function verifyOTP(requestId, otp) {
+  const redisKey = `otp:${requestId}`;
+
+  const record = await redisClient.get(redisKey);
+
+  if (!record) {
+    throw new Error("OTP expired or invalid");
+  }
+
+  const otpData = JSON.parse(record);
+
+  if (otpData.attempts >= 5) {
+    throw new Error("Maximum attempts exceeded");
+  }
+
+  const incomingHash = hashOTP(otp);
+
+  if (incomingHash !== otpData.otpHash) {
+    otpData.attempts += 1;
+
+    await redisClient.set(
+      redisKey,
+      JSON.stringify(otpData),
+      {
+        KEEPTTL: true,
+      }
+    );
+
+    throw new Error("Invalid OTP");
+  }
+
+  await redisClient.del(redisKey);
+
+  return {
+    verified: true,
+  };
+}
