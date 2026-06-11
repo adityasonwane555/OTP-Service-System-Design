@@ -4,13 +4,13 @@
 
 This repository documents the process of designing and building a production-grade OTP (One-Time Password) Service from scratch.
 
-The goal is to learn System Design, Backend Engineering, Authentication Systems, Security, Scalability, and Production Readiness by building a real-world OTP service step by step.
+The objective is to learn System Design, Backend Engineering, Security, Scalability, and Production Architecture by building a real-world authentication service step by step.
 
-This project focuses on understanding not only how to build a system, but why engineering decisions are made.
+The focus is not just implementation, but understanding the engineering decisions behind each component.
 
 ---
 
-## What Is an OTP Service?
+# What Is an OTP Service?
 
 An OTP (One-Time Password) Service is responsible for:
 
@@ -26,24 +26,32 @@ Common use cases:
 * Phone Number Authentication
 * Email Verification
 * Password Reset
-* Two-Factor Authentication (2FA)
+* Multi-Factor Authentication (MFA)
 * Banking Transaction Verification
+
+Examples:
+
+* Google
+* Amazon
+* Uber
+* WhatsApp
+* Banking Applications
 
 ---
 
-## Project Goals
+# Project Goals
 
 Build a production-grade OTP Service capable of:
 
 * Secure OTP Generation
 * OTP Verification
-* Automatic OTP Expiration
+* Automatic Expiration
 * One-Time OTP Consumption
-* Verification Attempt Limiting
+* Attempt Limiting
+* Rate Limiting
 * SMS Delivery
 * Email Delivery
-* Rate Limiting
-* Horizontal Scaling
+* Horizontal Scalability
 * Production Monitoring
 
 ---
@@ -59,7 +67,7 @@ Completed:
 * Functional Requirements
 * Non-Functional Requirements
 * Security Requirements
-* Core Entity Identification
+* Entity Identification
 
 ---
 
@@ -70,11 +78,11 @@ Completed:
 * High-Level Architecture
 * Request Lifecycle
 * Data Flow
-* Storage Design
-* Security Design
+* Redis Storage Design
+* Security Considerations
 * Scalability Considerations
 
-Architecture:
+High-Level Architecture:
 
 Client
 |
@@ -88,7 +96,7 @@ v
 Queue
 |
 v
-Worker Service
+Worker
 |
 v
 SMS / Email Provider
@@ -100,8 +108,8 @@ SMS / Email Provider
 Completed:
 
 * OTP Request Model
-* API Contract Design
-* Redis Key Structure
+* API Design
+* Redis Key Design
 * OTP Lifecycle Design
 * Verification Flow Design
 * Edge Case Analysis
@@ -118,16 +126,17 @@ Completed:
 * Health Check Endpoint
 * Redis Integration
 * Redis Connectivity Testing
-* Redis TTL Validation
+* Redis TTL Testing
 * Dockerized Redis Environment
 * OTP Generation
-* UUID Request ID Generation
+* Secure OTP Generation (`crypto.randomInt`)
+* UUID Request IDs
 * SHA-256 OTP Hashing
 * OTP Storage in Redis
 * OTP Verification
 * Attempt Tracking
 * OTP Consumption
-* Automatic OTP Expiration
+* Validation Middleware
 
 ### Currently Building
 
@@ -135,10 +144,9 @@ Completed:
 
 ### Upcoming
 
-* Validation Middleware
-* Secure OTP Generation
 * Rate Limiting
-* Logging
+* Structured Logging
+* Custom Error Handling
 * Monitoring
 * SMS Delivery
 * Email Delivery
@@ -150,12 +158,13 @@ Completed:
 Client
 |
 v
-Express API
+Validation Middleware
 |
-+-----------------------+
-|                       |
-v                       v
-OTP Generation      OTP Verification
+v
+Controller
+|
+v
+Service Layer
 |
 v
 Redis
@@ -173,6 +182,9 @@ otp-service/
 │   │
 │   ├── controllers/
 │   │   └── otp.controller.js
+│   │
+│   ├── middleware/
+│   │   └── otp.validation.js
 │   │
 │   ├── routes/
 │   │   └── otp.routes.js
@@ -209,11 +221,15 @@ otp-service/
 
 * Docker
 
+## Security
+
+* SHA-256 Hashing
+* Cryptographically Secure OTP Generation
+
 ## Utilities
 
 * UUID
 * Dotenv
-* Node.js Crypto
 
 ---
 
@@ -221,7 +237,9 @@ otp-service/
 
 ## Health Check
 
+```http
 GET /health
+```
 
 Response:
 
@@ -236,7 +254,9 @@ Response:
 
 ## Generate OTP
 
+```http
 POST /api/v1/otp/send
+```
 
 Request:
 
@@ -258,15 +278,17 @@ Response:
 
 Note:
 
-The OTP is currently returned for development and testing purposes only.
+OTP is returned only for development purposes.
 
-In production it will be sent via SMS or Email.
+In production it will be delivered through SMS or Email.
 
 ---
 
 ## Verify OTP
 
+```http
 POST /api/v1/otp/verify
+```
 
 Request:
 
@@ -288,7 +310,7 @@ Response:
 
 ---
 
-# Current OTP Lifecycle
+# OTP Lifecycle
 
 OTP Creation:
 
@@ -298,7 +320,7 @@ Hash OTP
 ↓
 Store Hash
 ↓
-Redis TTL (300 sec)
+TTL = 300 Seconds
 
 Verification:
 
@@ -308,25 +330,41 @@ Hash OTP
 ↓
 Compare Hashes
 ↓
-Success
-↓
 Delete OTP
 
 Expiration:
 
-OTP Created
-↓
-TTL Reaches Zero
+TTL Expires
 ↓
 Redis Deletes Key
 
 ---
 
-# Security Features Implemented
+# Security Features
+
+## Secure OTP Generation
+
+Uses:
+
+```javascript
+crypto.randomInt()
+```
+
+instead of:
+
+```javascript
+Math.random()
+```
+
+Benefits:
+
+* Cryptographically Secure
+* Suitable for Authentication Systems
+* Industry Standard
+
+---
 
 ## OTP Hashing
-
-OTP values are never stored directly.
 
 Stored:
 
@@ -340,28 +378,31 @@ instead of:
 123456
 ```
 
+Benefits:
+
+* No Plaintext Storage
+* Reduced Risk During Data Breaches
+
 ---
 
 ## One-Time Usage
 
-Successful verification:
+Successful Verification:
 
-```text
 Verify OTP
 ↓
 Delete Redis Key
-```
 
-Prevents OTP reuse.
+Prevents OTP Reuse.
 
 ---
 
 ## Attempt Tracking
 
-Failed verifications increment:
+Failed Attempts:
 
 ```text
-attempts
+attempts++
 ```
 
 After:
@@ -382,83 +423,15 @@ No cleanup jobs required.
 
 ---
 
-# Progress Tracker
-
-## System Design
-
-* [x] Problem Understanding
-* [x] Requirements Analysis
-* [x] High-Level Design
-* [x] Data Modeling
-* [x] MVP Design
-
-## Implementation
-
-* [x] Express Setup
-* [x] Redis Integration
-* [x] OTP Generation
-* [x] UUID Request IDs
-* [x] SHA-256 Hashing
-* [x] OTP Storage
-* [x] OTP Verification
-* [x] Attempt Tracking
-* [x] OTP Consumption
-* [x] Automatic Expiration
-* [ ] Validation Middleware
-* [ ] Structured Logging
-* [ ] Rate Limiting
-* [ ] Custom Error Handling
-
-## Production Readiness
-
-* [ ] Queue System
-* [ ] Worker Service
-* [ ] SMS Integration
-* [ ] Email Integration
-* [ ] Monitoring
-* [ ] Metrics
-* [ ] Docker Compose
-* [ ] CI/CD
-
----
-
 # Engineering Concepts Learned
-
-## Redis TTL
-
-Redis automatically expires OTPs after a configured duration.
-
-Example:
-
-SET otp:key value EX 300
-
-Benefits:
-
-* No cleanup jobs
-* Simpler architecture
-* Better performance
-
----
-
-## Hash-Based Verification
-
-Stored:
-
-SHA256(OTP)
-
-Verification:
-
-SHA256(User OTP)
-↓
-Compare Hashes
-
-Same principle used in password authentication systems.
-
----
 
 ## Layered Architecture
 
+Request
+↓
 Route
+↓
+Middleware
 ↓
 Controller
 ↓
@@ -471,7 +444,72 @@ Benefits:
 * Separation of Concerns
 * Easier Testing
 * Better Maintainability
-* Easier Scaling
+
+---
+
+## Validation Middleware
+
+Validation occurs before business logic.
+
+Benefits:
+
+* Cleaner Controllers
+* Reusable Validation Logic
+* Better API Design
+
+---
+
+## Redis TTL
+
+Example:
+
+```redis
+SET otp:key value EX 300
+```
+
+Benefits:
+
+* Automatic Cleanup
+* Simpler Architecture
+
+---
+
+# Progress Tracker
+
+## Core OTP System
+
+* [x] OTP Generation
+* [x] Secure OTP Generation
+* [x] OTP Hashing
+* [x] OTP Storage
+* [x] OTP Verification
+* [x] Attempt Tracking
+* [x] OTP Consumption
+* [x] Automatic Expiration
+
+## API Infrastructure
+
+* [x] Express Setup
+* [x] Redis Integration
+* [x] Validation Middleware
+* [x] Dockerized Development Environment
+
+## Production Hardening
+
+* [ ] Rate Limiting
+* [ ] Structured Logging
+* [ ] Custom Error Classes
+* [ ] Monitoring
+* [ ] Metrics Collection
+
+## Future Features
+
+* [ ] SMS Integration
+* [ ] Email Integration
+* [ ] Queue System
+* [ ] Worker Service
+* [ ] Resend OTP
+* [ ] OTP Status API
 
 ---
 
@@ -482,25 +520,23 @@ Core OTP Workflow Complete
 Implemented:
 
 * OTP Generation
-* OTP Hashing
-* OTP Storage
 * OTP Verification
-* Attempt Tracking
 * OTP Consumption
-* Automatic Expiration
+* Attempt Tracking
+* TTL Expiration
+* Validation Middleware
 
 Next Milestone:
 
 Production Hardening
 
-Planned Improvements:
+Upcoming Topics:
 
-* crypto.randomInt()
-* Validation Middleware
-* Custom Error Classes
-* Structured Logging
 * Rate Limiting
-* Better Error Responses
+* Structured Logging
+* Error Handling
+* Monitoring
+* Observability
 
 ---
 
@@ -518,7 +554,7 @@ Start Redis:
 docker start otp-redis
 ```
 
-Run the application:
+Run application:
 
 ```bash
 npm run dev
@@ -530,4 +566,4 @@ npm run dev
 
 This repository serves as a public engineering journal documenting the complete journey of designing and building a production-grade OTP Service from scratch.
 
-The focus is on understanding architecture, engineering trade-offs, scalability, security, and production-grade backend development rather than simply implementing features.
+The emphasis is on understanding architecture, security, scalability, reliability, and production-grade backend engineering rather than simply implementing features.
